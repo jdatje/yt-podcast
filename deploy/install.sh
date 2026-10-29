@@ -6,12 +6,13 @@ cd "$(dirname "$0")/.."
 apt-get update
 apt-get install -y python3 python3-venv ffmpeg curl unzip ca-certificates
 
+# Fixed uid 1500 so the HDD folder can be owned by it from the Proxmox host (101500 there).
 # yt-dlp needs a JavaScript runtime for YouTube; Deno is the recommended one.
 if ! command -v deno >/dev/null; then
   curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh -s -- -y
 fi
 
-id ytpodcast >/dev/null 2>&1 || useradd --system --home /opt/yt-podcast --shell /usr/sbin/nologin ytpodcast
+id ytpodcast >/dev/null 2>&1 || useradd --system --uid 1500 --home /opt/yt-podcast --shell /usr/sbin/nologin ytpodcast
 
 python3 -m venv venv
 venv/bin/pip install --quiet --upgrade pip "yt-dlp[default]"
