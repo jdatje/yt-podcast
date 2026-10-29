@@ -1,0 +1,52 @@
+# Copy to config.toml and fill in. config.toml is not committed (it holds your secret token).
+
+# Public address of the feed folder, including the secret token path.
+# Example: https://yt-podcast.tail1234.ts.net/<token>
+base_url = "https://CHANGE-ME.ts.net/CHANGE-ME-TOKEN"
+
+# Where feed XML + audio are written (this folder is what Funnel serves).
+public_dir = "/srv/yt-podcast/public"
+# Where download bookkeeping lives (not served).
+state_dir = "/srv/yt-podcast/state"
+
+yt_dlp = "/opt/yt-podcast/venv/bin/yt-dlp"
+max_downloads_per_run = 5        # spreads the first backfill over a few runs
+sleep_between_downloads = 20     # seconds, be gentle with YouTube
+
+[[feeds]]
+slug = "dungeon-masters"
+title = "Dungeon Masters (D&D Actual Play)"
+author = "Wizards of the Coast"
+description = "Dungeon Masters, the official Dungeons & Dragons actual play series. Audio from YouTube."
+link = "https://www.youtube.com/@DnDWizards"
+# cover = "https://.../cover.jpg"   # optional; defaults to the first episode's thumbnail
+sponsorblock_remove = ["sponsor", "selfpromo", "interaction"]
+
+# Videos whose title matches any of these are skipped (trailers, watch parties, ...).
+exclude = ["Watch Party", "Trailer", "Opening Titles", "Recap", "Behind the Scenes"]
+
+# Removed from episode titles in the app.
+title_cleanup = ["\\|?\\s*Official D&D Actual Play Series", "\\|?\\s*Tabletop Role Play", "^Dungeon Masters:?\\s*\\|?\\s*"]
+
+# Picks the episode number out of the title; falls back to playlist order.
+episode_regex = "Episode\\s*(\\d+)"
+
+[feeds.season_names]
+1 = "Campaign 1: Ashes of the Black Rose"
+2 = "Innsmouth Interlude"
+3 = "Campaign 2: Arcana Unleashed"
+4 = "World of Warcraft"
+
+# Playlist with campaigns 1-3: season decided per video by matching its title (first match wins).
+[[feeds.playlists]]
+url = "https://www.youtube.com/playlist?list=CHANGE-ME"
+seasons = [
+  { match = "Innsmouth", season = 2 },
+  { match = "Campaign 2|Arcana", season = 3 },
+  { match = "Campaign 1|Ravenloft|Black Rose", season = 1 },
+]
+
+# World of Warcraft playlist: everything in it is season 4.
+[[feeds.playlists]]
+url = "https://www.youtube.com/playlist?list=CHANGE-ME"
+season = 4

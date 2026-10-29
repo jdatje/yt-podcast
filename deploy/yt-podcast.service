@@ -1,0 +1,16 @@
+[Unit]
+Description=yt-podcast: fetch new YouTube episodes and rebuild podcast feeds
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=ytpodcast
+Group=ytpodcast
+WorkingDirectory=/opt/yt-podcast
+Environment=PATH=/opt/yt-podcast/venv/bin:/usr/local/bin:/usr/bin:/bin
+# Keep yt-dlp current; YouTube changes often. A failed update must not block the run.
+ExecStartPre=-/opt/yt-podcast/venv/bin/pip install --quiet --upgrade "yt-dlp[default]"
+ExecStart=/opt/yt-podcast/venv/bin/python /opt/yt-podcast/ytpodcast.py run --config /opt/yt-podcast/config.toml
+TimeoutStartSec=6h
+Nice=10
