@@ -260,16 +260,27 @@ def build_feed(cfg: dict, feed: dict, state: dict) -> Path:
         sub(img, "title", feed["title"])
         sub(img, "link", feed.get("link", "https://www.youtube.com"))
 
+    # Apps sort by pubDate, not by season/episode. Walk back from the newest episode and make
+    # every date earlier than the next episode's, so date order == story order. Recent episodes
+    # keep their real upload date; re-uploads/compilations posted out of order move back.
+    pubs: list[datetime] = []
+    nxt: datetime | None = None
+    for e in reversed(eps):
+        day = datetime.strptime(e["upload_date"], "%Y%m%d") if e.get("upload_date") else datetime(2000, 1, 1)
+        pub = day.replace(hour=12, tzinfo=timezone.utc)
+        if nxt is not None and pub >= nxt:
+            pub = nxt - timedelta(hours=1)
+        pubs.append(pub)
+        nxt = pub
+    pubs.reverse()
+
     season_names = {int(k): v for k, v in feed.get("season_names", {}).items()}
-    for e in eps:
+    for e, pub in zip(eps, pubs):
         it = sub(ch, "item")
         sub(it, "title", e["title"])
         sub(it, "description", e.get("description", ""))
         sub(it, "guid", e["id"], isPermaLink="false")
         sub(it, "link", f"https://www.youtube.com/watch?v={e['id']}")
-        # Same-day uploads (double-episode premieres) get a few minutes apart so apps sort them correctly.
-        day = datetime.strptime(e["upload_date"], "%Y%m%d") if e.get("upload_date") else datetime(2000, 1, 1)
-        pub = day.replace(hour=12, tzinfo=timezone.utc) + timedelta(minutes=e["episode"])
         sub(it, "pubDate", email.utils.format_datetime(pub))
         url = f"{base}/{e['file']}"
         sub(it, "enclosure", url=url, length=str(e["size"]), type_=MIME.get(Path(e["file"]).suffix, "audio/mp4"))

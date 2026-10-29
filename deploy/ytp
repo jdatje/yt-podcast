@@ -15,7 +15,8 @@ case "$1" in
            run systemctl start --no-block yt-podcast.service &&
            echo "Downloading in the background. Check progress with: ytp log" ;;
   run)     run systemctl start --no-block yt-podcast.service && echo "Started. Check progress with: ytp log" ;;
+  feed)    py feed ;;
   log)     run journalctl -u yt-podcast -n "${2:-25}" --no-pager -o cat ;;
   status)  run systemctl list-timers yt-podcast.timer --no-pager; du -sh /mainStorage/podcasts ;;
-  *)       echo "usage: ytp update | setup | list | start | run | log [lines] | status" ;;
+  *)       echo "usage: ytp update | setup | list | start | run | feed | log [lines] | status" ;;
 esac
