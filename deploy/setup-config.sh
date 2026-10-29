@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Fills in config.toml (host name + secret token) and publishes the feed folder on Funnel port 8443.
-# Safe to re-run: keeps an existing token.
+# Safe to re-run: keeps an existing token. Hex token so it is easy to read off a screenshot.
 set -euo pipefail
 cd /opt/yt-podcast
 
 host=$(tailscale status --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["Self"]["DNSName"].rstrip("."))')
 if [ ! -f config.toml ] || grep -q 'HOSTNAME:8443/TOKEN\|CHANGE-ME' config.toml; then
-  token=$(python3 -c 'import secrets; print(secrets.token_urlsafe(18))')
+  token=$(python3 -c 'import secrets; print(secrets.token_hex(12))')
   sed -e "s#https://HOSTNAME:8443/TOKEN#https://$host:8443/$token#" config.example.toml > config.toml
 fi
 chown ytpodcast:ytpodcast config.toml
