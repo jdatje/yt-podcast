@@ -135,7 +135,8 @@ def plan_feed(cfg: dict, feed: dict, verbose: bool = False) -> list[dict]:
     seen: set[str] = set()
     planned: list[dict] = []
     for pl in feed["playlists"]:
-        exclude = feed_exclude + [re.compile(x, re.IGNORECASE) for x in pl.get("exclude", [])]
+        base = [] if pl.get("ignore_feed_exclude") else feed_exclude
+        exclude = base + [re.compile(x, re.IGNORECASE) for x in pl.get("exclude", [])]
         entries = list_playlist(cfg, resolve_playlist_url(cfg, feed, pl))
         if pl.get("reverse"):
             entries.reverse()  # playlist is newest-first

@@ -10,7 +10,7 @@ public_dir = "/srv/yt-podcast/public"
 state_dir = "/srv/yt-podcast/state"
 
 yt_dlp = "/opt/yt-podcast/venv/bin/yt-dlp"
-max_downloads_per_run = 10       # spreads the first backfill over a few runs
+max_downloads_per_run = 30       # caps one run; the first run fetches the whole back catalog
 sleep_between_downloads = 20     # seconds, be gentle with YouTube
 
 [[feeds]]
@@ -58,6 +58,8 @@ season = 1
 [[feeds.playlists]]
 title = "Dungeon Masters: Innsmouth Interlude D&D Campaign"
 season = 2
+# This one-shot only exists as one full upload, so don't apply the "FULL CAMPAIGN" skip here.
+ignore_feed_exclude = true
 
 [[feeds.playlists]]
 title = "Dungeon Masters: Arcana Unleashed D&D Campaign"
