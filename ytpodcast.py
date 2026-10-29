@@ -98,6 +98,29 @@ def list_playlist(cfg: dict, url: str) -> list[dict]:
     return out
 
 
+_channel_playlists: dict[str, list[dict]] = {}
+
+
+def resolve_playlist_url(cfg: dict, feed: dict, pl: dict) -> str:
+    """A playlist is given by url, or by its title on the channel of feed.channel_video."""
+    if "url" in pl:
+        return pl["url"]
+    video = feed.get("channel_video")
+    if not video:
+        sys.exit(f"config: playlist '{pl.get('title')}' needs feed.channel_video to look it up")
+    if video not in _channel_playlists:
+        channel = yt(cfg, "--print", "channel_url", "--skip-download", video).stdout.strip().splitlines()[-1]
+        data = json.loads(yt(cfg, "--flat-playlist", "--dump-single-json", f"{channel}/playlists").stdout)
+        _channel_playlists[video] = [e for e in data.get("entries") or [] if e and e.get("id")]
+    wanted = pl["title"].casefold()
+    lists = _channel_playlists[video]
+    hit = next((e for e in lists if (e.get("title") or "").casefold() == wanted), None) \
+        or next((e for e in lists if wanted in (e.get("title") or "").casefold()), None)
+    if not hit:
+        sys.exit(f"playlist not found on channel: {pl['title']}")
+    return f"https://www.youtube.com/playlist?list={hit['id']}"
+
+
 def first_match(rules: list[dict], title: str) -> dict | None:
     for r in rules:
         if re.search(r["match"], title, re.IGNORECASE):
@@ -108,11 +131,15 @@ def first_match(rules: list[dict], title: str) -> dict | None:
 def plan_feed(cfg: dict, feed: dict) -> list[dict]:
     """Return the ordered list of episodes the feed should contain."""
     exclude = [re.compile(x, re.IGNORECASE) for x in feed.get("exclude", [])]
-    ep_re = re.compile(feed.get("episode_regex", r"Episode\s*(\d+)"), re.IGNORECASE)
+    ep_re = re.compile(feed.get("episode_regex", r"Episodes?\s*(\d+)"), re.IGNORECASE)
     seen: set[str] = set()
     planned: list[dict] = []
     for pl in feed["playlists"]:
-        for e in list_playlist(cfg, pl["url"]):
+        entries = list_playlist(cfg, resolve_playlist_url(cfg, feed, pl))
+        if pl.get("reverse"):
+            entries.reverse()  # playlist is newest-first
+        log(f"  playlist '{pl.get('title') or pl.get('url')}': {len(entries)} videos")
+        for e in entries:
             if e["id"] in seen or any(x.search(e["title"]) for x in exclude):
                 continue
             rule = first_match(pl.get("seasons", []), e["title"])
@@ -258,7 +285,7 @@ def cmd_list(cfg: dict) -> None:
     for feed in cfg["feeds"]:
         state = load_state(cfg, feed)
         print(f"\n== {feed['title']} ==")
-        for p in plan_feed(cfg, feed):
+        for p in sorted(plan_feed(cfg, feed), key=lambda p: (p["season"], p["episode"])):
             have = "done" if state["episodes"].get(p["id"], {}).get("status") == "done" else "new "
             print(f"S{p['season']:02d}E{p['episode']:02d} {have} {clean_title(feed, p['title'])}")
 

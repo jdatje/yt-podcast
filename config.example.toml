@@ -18,18 +18,29 @@ slug = "dungeon-masters"
 title = "Dungeon Masters (D&D Actual Play)"
 author = "Wizards of the Coast"
 description = "Dungeon Masters, the official Dungeons & Dragons actual play series. Audio from YouTube."
-link = "https://www.youtube.com/playlist?list=PLQK4_XnP40aY"
+link = "https://www.youtube.com/playlist?list=PLYjIYvLQCIkI"
+# Any video of the channel; used to look up playlists by their title.
+channel_video = "https://youtu.be/6mOe2-NHvq4"
 # cover = "https://.../cover.jpg"   # optional; defaults to the first episode's thumbnail
 sponsorblock_remove = ["sponsor", "selfpromo", "interaction"]
 
 # Videos whose title matches any of these are skipped (trailers, watch parties, ...).
-exclude = ["Watch Party", "Trailer", "Opening Titles", "Recap", "Behind the Scenes"]
+# FULL CAMPAIGN = whole-campaign compilations; PREMIERE = duplicate of the regular "Episodes 1 & 2" upload.
+exclude = ["Watch Party", "Trailer", "Opening Titles", "Recap", "Behind the Scenes", "FULL CAMPAIGN", "FULL \\d+ HOUR", "PREMIERE"]
 
 # Removed from episode titles in the app.
-title_cleanup = ["\\|?\\s*Official D&D Actual Play Series", "\\|?\\s*Tabletop Role Play", "^Dungeon Masters:?\\s*\\|?\\s*"]
+title_cleanup = [
+  '\|?\s*Official D&D Actual Play Series',
+  '\|?\s*D&D Official.*$',
+  '\|?\s*Tabletop Role Play',
+  '\|\s*Dungeons & Dragons\s*$',
+  '\|\s*D&D\s*$',
+  '^Dungeon Masters:?\s*\|?\s*',
+  '^World of Warcraft (D&D )?Campaign\s*\|?\s*',
+]
 
 # Picks the episode number out of the title; falls back to playlist order.
-episode_regex = "Episode\\s*(\\d+)"
+episode_regex = "Episodes?\\s*(\\d+)"
 
 [feeds.season_names]
 1 = "Campaign 1: Ashes of the Black Rose"
@@ -37,17 +48,21 @@ episode_regex = "Episode\\s*(\\d+)"
 3 = "Campaign 2: Arcana Unleashed"
 4 = "World of Warcraft"
 
-# "Dungeon Masters | Full D&D Campaigns": season decided per video by its title (first match wins).
+# One playlist per campaign, looked up on the channel by title. Each is one season.
 [[feeds.playlists]]
-url = "https://www.youtube.com/playlist?list=PLQK4_XnP40aY"
-seasons = [
-  { match = "Innsmouth|Sithicus", season = 2 },
-  { match = "Campaign 2|Arcana|Anauroch", season = 3 },
-  { match = "Warcraft", season = 4 },
-  { match = "Campaign 1|Ravenloft|Black Rose", season = 1 },
-]
+title = "Dungeon Masters: Ravenloft D&D Campaign"
+season = 1
 
-# "D&D Dungeon Masters | World Of Warcraft Campaign": everything in it is season 4.
+[[feeds.playlists]]
+title = "Dungeon Masters: Innsmouth Interlude D&D Campaign"
+season = 2
+
+[[feeds.playlists]]
+title = "Dungeon Masters: Arcana Unleashed D&D Campaign"
+season = 3
+
+# "D&D Dungeon Masters | World Of Warcraft Campaign" (newest first).
 [[feeds.playlists]]
 url = "https://www.youtube.com/playlist?list=PLYjIYvLQCIkI"
 season = 4
+reverse = true
