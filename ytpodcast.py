@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import email.utils
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -46,6 +47,10 @@ def load_config(path: Path) -> dict:
     cfg["state_dir"] = Path(cfg.get("state_dir", cfg["public_dir"].parent / "state"))
     cfg.setdefault("yt_dlp", "yt-dlp")
     cfg.setdefault("max_downloads_per_run", 5)
+    # yt-dlp and Deno write caches under $HOME, which the service user can't write to.
+    cache = cfg["state_dir"] / "cache"
+    os.environ.setdefault("XDG_CACHE_HOME", str(cache))
+    os.environ.setdefault("DENO_DIR", str(cache / "deno"))
     return cfg
 
 
