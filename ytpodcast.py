@@ -331,6 +331,7 @@ def cmd_run(cfg: dict) -> int:
                 failures += 1
                 log(f"  failed: {ep['error']}")
             save_state(cfg, feed, state)
+            build_feed(cfg, feed, state)  # so new episodes show up while the backlog is still downloading
             time.sleep(cfg.get("sleep_between_downloads", 20))
         save_state(cfg, feed, state)
         out = build_feed(cfg, feed, state)
