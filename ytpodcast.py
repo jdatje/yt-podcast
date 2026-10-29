@@ -128,19 +128,25 @@ def first_match(rules: list[dict], title: str) -> dict | None:
     return None
 
 
-def plan_feed(cfg: dict, feed: dict) -> list[dict]:
+def plan_feed(cfg: dict, feed: dict, verbose: bool = False) -> list[dict]:
     """Return the ordered list of episodes the feed should contain."""
-    exclude = [re.compile(x, re.IGNORECASE) for x in feed.get("exclude", [])]
-    ep_re = re.compile(feed.get("episode_regex", r"Episodes?\s*(\d+)"), re.IGNORECASE)
+    feed_exclude = [re.compile(x, re.IGNORECASE) for x in feed.get("exclude", [])]
+    ep_re = re.compile(feed.get("episode_regex", r"(?:Episodes?|Ep\.?)\s*(\d+)"), re.IGNORECASE)
     seen: set[str] = set()
     planned: list[dict] = []
     for pl in feed["playlists"]:
+        exclude = feed_exclude + [re.compile(x, re.IGNORECASE) for x in pl.get("exclude", [])]
         entries = list_playlist(cfg, resolve_playlist_url(cfg, feed, pl))
         if pl.get("reverse"):
             entries.reverse()  # playlist is newest-first
         log(f"  playlist '{pl.get('title') or pl.get('url')}': {len(entries)} videos")
         for e in entries:
-            if e["id"] in seen or any(x.search(e["title"]) for x in exclude):
+            if e["id"] in seen:
+                continue
+            hit = next((x.pattern for x in exclude if x.search(e["title"])), None)
+            if hit:
+                if verbose:
+                    log(f"  skip (excluded by '{hit}'): {e['title']}")
                 continue
             rule = first_match(pl.get("seasons", []), e["title"])
             season = rule["season"] if rule else pl.get("season")
@@ -150,16 +156,21 @@ def plan_feed(cfg: dict, feed: dict) -> list[dict]:
             seen.add(e["id"])
             m = ep_re.search(e["title"])
             planned.append({**e, "season": int(season), "title_episode": int(m.group(1)) if m else None})
-    # Episode numbers: from the titles when every episode of a season has a unique one,
-    # otherwise playlist order within the season (avoids duplicate numbers).
+    # Episode numbers come from the titles. A video without a number (an epilogue, say)
+    # gets the next free number after the episode before it; duplicates are bumped the same way.
     by_season: dict[int, list[dict]] = {}
     for p in planned:
         by_season.setdefault(p["season"], []).append(p)
     for eps in by_season.values():
-        nums = [p["title_episode"] for p in eps]
-        use_titles = None not in nums and len(set(nums)) == len(nums)
-        for i, p in enumerate(eps, start=1):
-            p["episode"] = p["title_episode"] if use_titles else i
+        used: set[int] = set()
+        prev = 0
+        for p in eps:
+            n = p["title_episode"] or prev + 1
+            while n in used:
+                n += 1
+            p["episode"] = n
+            used.add(n)
+            prev = n
     return planned
 
 
@@ -285,7 +296,7 @@ def cmd_list(cfg: dict) -> None:
     for feed in cfg["feeds"]:
         state = load_state(cfg, feed)
         print(f"\n== {feed['title']} ==")
-        for p in sorted(plan_feed(cfg, feed), key=lambda p: (p["season"], p["episode"])):
+        for p in sorted(plan_feed(cfg, feed, verbose=True), key=lambda p: (p["season"], p["episode"])):
             have = "done" if state["episodes"].get(p["id"], {}).get("status") == "done" else "new "
             print(f"S{p['season']:02d}E{p['episode']:02d} {have} {clean_title(feed, p['title'])}")
 

@@ -25,8 +25,8 @@ channel_video = "https://youtu.be/6mOe2-NHvq4"
 sponsorblock_remove = ["sponsor", "selfpromo", "interaction"]
 
 # Videos whose title matches any of these are skipped (trailers, watch parties, ...).
-# FULL CAMPAIGN = whole-campaign compilations; PREMIERE = duplicate of the regular "Episodes 1 & 2" upload.
-exclude = ["Watch Party", "Trailer", "Opening Titles", "Recap", "Behind the Scenes", "FULL CAMPAIGN", "FULL \\d+ HOUR", "PREMIERE"]
+# FULL CAMPAIGN = whole-campaign compilations.
+exclude = ["Watch Party", "Trailer", "Opening Titles", "Recap", "Behind the Scenes", "FULL CAMPAIGN", "FULL \\d+ HOUR"]
 
 # Removed from episode titles in the app.
 title_cleanup = [
@@ -37,10 +37,12 @@ title_cleanup = [
   '\|\s*D&D\s*$',
   '^Dungeon Masters:?\s*\|?\s*',
   '^World of Warcraft (D&D )?Campaign\s*\|?\s*',
+  '\|\s*Dungeon Masters\s*$',
+  '^D&D:\s*',
 ]
 
 # Picks the episode number out of the title; falls back to playlist order.
-episode_regex = "Episodes?\\s*(\\d+)"
+episode_regex = '(?:Episodes?|Ep\.?)\s*(\d+)'
 
 [feeds.season_names]
 1 = "Campaign 1: Ashes of the Black Rose"
@@ -66,3 +68,5 @@ season = 3
 url = "https://www.youtube.com/playlist?list=PLYjIYvLQCIkI"
 season = 4
 reverse = true
+# This playlist has both the premiere stream and the regular upload of "Episodes 1 & 2".
+exclude = ["PREMIERE"]
