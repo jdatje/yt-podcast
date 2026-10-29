@@ -1,0 +1,21 @@
+#!/bin/sh
+# Shortcut for the Proxmox host: runs yt-podcast commands inside the dmdash container.
+# Install once on the host:  pct exec 106 -- cat /opt/yt-podcast/deploy/ytp > /usr/local/bin/ytp; chmod +x /usr/local/bin/ytp
+CT=106
+run() { pct exec "$CT" -- "$@"; }
+py() { run runuser -u ytpodcast -- /opt/yt-podcast/venv/bin/python /opt/yt-podcast/ytpodcast.py "$@"; }
+
+case "$1" in
+  update)  run git -C /opt/yt-podcast pull &&
+           run cat /opt/yt-podcast/deploy/ytp > /usr/local/bin/ytp.new &&
+           chmod +x /usr/local/bin/ytp.new && mv /usr/local/bin/ytp.new /usr/local/bin/ytp ;;
+  setup)   run /opt/yt-podcast/deploy/setup-config.sh ;;
+  list)    py list ;;
+  start)   run systemctl enable --now yt-podcast.timer &&
+           run systemctl start --no-block yt-podcast.service &&
+           echo "Downloading in the background. Check progress with: ytp log" ;;
+  run)     run systemctl start --no-block yt-podcast.service && echo "Started. Check progress with: ytp log" ;;
+  log)     run journalctl -u yt-podcast -n "${2:-25}" --no-pager -o cat ;;
+  status)  run systemctl list-timers yt-podcast.timer --no-pager; du -sh /mainStorage/podcasts ;;
+  *)       echo "usage: ytp update | setup | list | start | run | log [lines] | status" ;;
+esac
