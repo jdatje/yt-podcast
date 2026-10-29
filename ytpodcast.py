@@ -236,6 +236,21 @@ def sub(parent: ET.Element, tag: str, text: str | None = None, **attrs) -> ET.El
     return el
 
 
+def upload_time(cfg: dict, ep: dict) -> datetime:
+    """Exact upload time from yt-dlp's info file when we have it, else noon on the upload day."""
+    info = cfg["state_dir"] / "info" / f"{ep['id']}.info.json"
+    if info.exists():
+        try:
+            data = json.loads(info.read_text())
+            ts = data.get("release_timestamp") or data.get("timestamp")
+            if ts:
+                return datetime.fromtimestamp(int(ts), timezone.utc)
+        except (ValueError, OSError):
+            pass
+    day = datetime.strptime(ep["upload_date"], "%Y%m%d") if ep.get("upload_date") else datetime(2000, 1, 1)
+    return day.replace(hour=12, tzinfo=timezone.utc)
+
+
 def build_feed(cfg: dict, feed: dict, state: dict) -> Path:
     base = f"{cfg['base_url']}/{feed['slug']}"
     eps = [e for e in state["episodes"].values() if e.get("status") == "done"]
@@ -264,11 +279,10 @@ def build_feed(cfg: dict, feed: dict, state: dict) -> Path:
     # every date earlier than the next episode's, so date order == story order. Recent episodes
     # keep their real upload date; re-uploads/compilations posted out of order move back.
     pubs: list[datetime] = []
-    nxt: datetime | None = None
+    nxt: datetime = datetime.now(timezone.utc)  # never in the future
     for e in reversed(eps):
-        day = datetime.strptime(e["upload_date"], "%Y%m%d") if e.get("upload_date") else datetime(2000, 1, 1)
-        pub = day.replace(hour=12, tzinfo=timezone.utc)
-        if nxt is not None and pub >= nxt:
+        pub = upload_time(cfg, e)
+        if pub >= nxt:
             pub = nxt - timedelta(hours=1)
         pubs.append(pub)
         nxt = pub
