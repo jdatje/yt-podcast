@@ -1,8 +1,8 @@
 # Copy to config.toml and fill in. config.toml is not committed (it holds your secret token).
 
 # Public address of the feed folder, including the secret token path.
-# Example: https://yt-podcast.tail1234.ts.net/<token>
-base_url = "https://CHANGE-ME.ts.net/CHANGE-ME-TOKEN"
+# Example: https://myhost.tail1234.ts.net:8443/<token>
+base_url = "https://HOSTNAME:8443/TOKEN"   # filled in by deploy/setup-config.sh
 
 # Where feed XML + audio are written (this folder is what Funnel serves).
 public_dir = "/srv/yt-podcast/public"
@@ -10,7 +10,7 @@ public_dir = "/srv/yt-podcast/public"
 state_dir = "/srv/yt-podcast/state"
 
 yt_dlp = "/opt/yt-podcast/venv/bin/yt-dlp"
-max_downloads_per_run = 5        # spreads the first backfill over a few runs
+max_downloads_per_run = 10       # spreads the first backfill over a few runs
 sleep_between_downloads = 20     # seconds, be gentle with YouTube
 
 [[feeds]]
@@ -18,7 +18,7 @@ slug = "dungeon-masters"
 title = "Dungeon Masters (D&D Actual Play)"
 author = "Wizards of the Coast"
 description = "Dungeon Masters, the official Dungeons & Dragons actual play series. Audio from YouTube."
-link = "https://www.youtube.com/@DnDWizards"
+link = "https://www.youtube.com/playlist?list=PLQK4_XnP40aY"
 # cover = "https://.../cover.jpg"   # optional; defaults to the first episode's thumbnail
 sponsorblock_remove = ["sponsor", "selfpromo", "interaction"]
 
@@ -37,16 +37,17 @@ episode_regex = "Episode\\s*(\\d+)"
 3 = "Campaign 2: Arcana Unleashed"
 4 = "World of Warcraft"
 
-# Playlist with campaigns 1-3: season decided per video by matching its title (first match wins).
+# "Dungeon Masters | Full D&D Campaigns": season decided per video by its title (first match wins).
 [[feeds.playlists]]
-url = "https://www.youtube.com/playlist?list=CHANGE-ME"
+url = "https://www.youtube.com/playlist?list=PLQK4_XnP40aY"
 seasons = [
-  { match = "Innsmouth", season = 2 },
-  { match = "Campaign 2|Arcana", season = 3 },
+  { match = "Innsmouth|Sithicus", season = 2 },
+  { match = "Campaign 2|Arcana|Anauroch", season = 3 },
+  { match = "Warcraft", season = 4 },
   { match = "Campaign 1|Ravenloft|Black Rose", season = 1 },
 ]
 
-# World of Warcraft playlist: everything in it is season 4.
+# "D&D Dungeon Masters | World Of Warcraft Campaign": everything in it is season 4.
 [[feeds.playlists]]
-url = "https://www.youtube.com/playlist?list=CHANGE-ME"
+url = "https://www.youtube.com/playlist?list=PLYjIYvLQCIkI"
 season = 4

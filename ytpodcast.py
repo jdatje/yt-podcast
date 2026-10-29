@@ -110,19 +110,24 @@ def plan_feed(cfg: dict, feed: dict) -> list[dict]:
         for e in list_playlist(cfg, pl["url"]):
             if e["id"] in seen or any(x.search(e["title"]) for x in exclude):
                 continue
-            seen.add(e["id"])
             rule = first_match(pl.get("seasons", []), e["title"])
             season = rule["season"] if rule else pl.get("season")
             if season is None:
                 log(f"  skip (no season rule matches): {e['title']}")
-                continue
+                continue  # not marked seen: a later playlist may still claim it
+            seen.add(e["id"])
             m = ep_re.search(e["title"])
             planned.append({**e, "season": int(season), "title_episode": int(m.group(1)) if m else None})
-    # Episode numbers: from the title when present, else running order within the season.
-    counters: dict[int, int] = {}
+    # Episode numbers: from the titles when every episode of a season has a unique one,
+    # otherwise playlist order within the season (avoids duplicate numbers).
+    by_season: dict[int, list[dict]] = {}
     for p in planned:
-        counters[p["season"]] = counters.get(p["season"], 0) + 1
-        p["episode"] = p["title_episode"] or counters[p["season"]]
+        by_season.setdefault(p["season"], []).append(p)
+    for eps in by_season.values():
+        nums = [p["title_episode"] for p in eps]
+        use_titles = None not in nums and len(set(nums)) == len(nums)
+        for i, p in enumerate(eps, start=1):
+            p["episode"] = p["title_episode"] if use_titles else i
     return planned
 
 

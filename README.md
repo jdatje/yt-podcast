@@ -25,13 +25,13 @@ nano /opt/yt-podcast/config.toml
 systemctl enable --now yt-podcast.timer
 ```
 
-Served publicly with Tailscale Funnel under a secret path:
+Served publicly with Tailscale Funnel under a secret path (`deploy/setup-config.sh` does this and fills in config.toml):
 
 ```
-tailscale funnel --bg --set-path /<token> /srv/yt-podcast/public
+tailscale funnel --bg --https=8443 --set-path /<token> /srv/yt-podcast/public
 ```
 
-Feed URL: `https://<host>.<tailnet>.ts.net/<token>/<slug>.xml`
+Feed URL: `https://<host>.<tailnet>.ts.net:8443/<token>/<slug>.xml`
 
 ## Update
 
